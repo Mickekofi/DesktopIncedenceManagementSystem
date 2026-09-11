@@ -1,0 +1,277 @@
+CREATE TABLE IF NOT EXISTS users (
+    
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    username VARCHAR(50) NOT NULL UNIQUE,
+
+    password_hash VARCHAR(255) NOT NULL,
+
+    role ENUM(
+        'ADMIN',
+        'STUDENT',
+        'SECURITY'
+    ) NOT NULL,
+
+    full_name VARCHAR(150) NOT NULL,
+
+    campus_id INT NULL,
+
+    phone_number VARCHAR(20) NULL,
+
+    profile_photo_path VARCHAR(255) NULL,
+
+    first_login_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    ALTER TABLE users ADD COLUMN last_notification_check DATETIME NULL;
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+
+) ENGINE=InnoDB;
+
+
+
+CREATE TABLE IF NOT EXISTS campuses (
+
+    campus_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    campus_name VARCHAR(100) NOT NULL UNIQUE,
+
+    campus_code VARCHAR(20) NOT NULL UNIQUE,
+
+    campus_description VARCHAR(255) NULL,
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+
+) ENGINE=InnoDB;
+
+
+
+
+CREATE TABLE IF NOT EXISTS incident_categories (
+
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    category_name VARCHAR(100) NOT NULL UNIQUE,
+
+    category_description VARCHAR(500) NULL,
+
+    severity_default ENUM(
+        'LOW',
+        'MEDIUM',
+        'HIGH',
+        'CRITICAL'
+    ) NOT NULL DEFAULT 'MEDIUM',
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+
+) ENGINE=InnoDB;
+
+
+
+CREATE TABLE IF NOT EXISTS incidents (
+
+    incident_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    incident_reference VARCHAR(30) NOT NULL UNIQUE,
+
+    reported_by_user_id INT NOT NULL,
+
+    campus_id INT NOT NULL,
+
+    category_id INT NOT NULL,
+
+    incident_title VARCHAR(200) NOT NULL,
+
+    incident_description TEXT NOT NULL,
+
+    incident_location VARCHAR(255) NOT NULL,
+
+    priority_level ENUM(
+        'LOW',
+        'MEDIUM',
+        'HIGH',
+        'CRITICAL'
+    ) NOT NULL DEFAULT 'MEDIUM',
+
+    evidence_image_path VARCHAR(255) NULL,
+
+    current_status ENUM(
+        'PENDING',
+        'ASSIGNED',
+        'IN_PROGRESS',
+        'RESOLVED',
+        'CLOSED',
+        'REJECTED'
+    ) NOT NULL DEFAULT 'PENDING',
+
+    reported_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    closed_at DATETIME NULL,
+
+    CONSTRAINT fk_incident_reporter
+        FOREIGN KEY (reported_by_user_id)
+        REFERENCES users(user_id),
+
+    CONSTRAINT fk_incident_campus
+        FOREIGN KEY (campus_id)
+        REFERENCES campuses(campus_id),
+
+    CONSTRAINT fk_incident_category
+        FOREIGN KEY (category_id)
+        REFERENCES incident_categories(category_id)
+
+) ENGINE=InnoDB;
+
+
+
+CREATE TABLE IF NOT EXISTS incident_assignments (
+
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    incident_id INT NOT NULL,
+
+    assigned_by_user_id INT NOT NULL,
+
+    assigned_to_user_id INT NOT NULL,
+
+    assignment_notes TEXT NULL,
+
+    assignment_status ENUM(
+        'ACTIVE',
+        'REASSIGNED',
+        'COMPLETED',
+        'CANCELLED'
+    ) NOT NULL DEFAULT 'ACTIVE',
+
+    assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    completed_at DATETIME NULL,
+
+    CONSTRAINT fk_assignment_incident
+        FOREIGN KEY (incident_id)
+        REFERENCES incidents(incident_id),
+
+    CONSTRAINT fk_assignment_admin
+        FOREIGN KEY (assigned_by_user_id)
+        REFERENCES users(user_id),
+
+    CONSTRAINT fk_assignment_security
+        FOREIGN KEY (assigned_to_user_id)
+        REFERENCES users(user_id)
+
+) ENGINE=InnoDB;
+
+
+
+CREATE TABLE IF NOT EXISTS incident_responses (
+
+    response_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    incident_id INT NOT NULL,
+
+    responded_by_user_id INT NOT NULL,
+
+    response_type ENUM(
+        'INVESTIGATION_UPDATE',
+        'ACTION_TAKEN',
+        'FINAL_REPORT'
+    ) NOT NULL,
+
+    response_details TEXT NOT NULL,
+
+    evidence_image_path VARCHAR(255) NULL,
+
+    response_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_response_incident
+        FOREIGN KEY (incident_id)
+        REFERENCES incidents(incident_id),
+
+    CONSTRAINT fk_response_security
+        FOREIGN KEY (responded_by_user_id)
+        REFERENCES users(user_id)
+
+) ENGINE=InnoDB;
+
+
+
+CREATE TABLE IF NOT EXISTS incident_status_history (
+
+    status_history_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    incident_id INT NOT NULL,
+
+    changed_by_user_id INT NOT NULL,
+
+    previous_status ENUM(
+        'PENDING',
+        'ASSIGNED',
+        'IN_PROGRESS',
+        'RESOLVED',
+        'CLOSED',
+        'REJECTED'
+    ) NOT NULL,
+
+    new_status ENUM(
+        'PENDING',
+        'ASSIGNED',
+        'IN_PROGRESS',
+        'RESOLVED',
+        'CLOSED',
+        'REJECTED'
+    ) NOT NULL,
+
+    change_reason VARCHAR(255) NULL,
+
+    changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_status_incident
+        FOREIGN KEY (incident_id)
+        REFERENCES incidents(incident_id),
+
+    CONSTRAINT fk_status_user
+        FOREIGN KEY (changed_by_user_id)
+        REFERENCES users(user_id)
+
+) ENGINE=InnoDB;
+
+
+
+
+
+INSERT YOR 1st ADMIN
+=======================
+
+INSERT INTO users (
+    username, 
+    password_hash, 
+    role, 
+    full_name, 
+    campus_id, 
+    phone_number, 
+    first_login_completed, 
+    is_active
+) VALUES (
+    'Admin', 
+  'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 
+    'ADMIN', 
+    'System Administrator', 
+    NULL, 
+    '0200000000', 
+    TRUE, 
+    TRUE
+);
